@@ -125,13 +125,16 @@ Minimal row loss for EPA and DOE (these fields are well-populated). Some NHTSA r
 1. **Identify outliers statistically** using IQR (Interquartile Range), which is a method that flags values significantly beyond the typical middle range of the data. IQR measures the spread of the middle 50% of values, and anything 1.5× that spread above or below the typical range is flagged as unusual.
 2. **Inspect flagged records** - are they legitimate edge cases or data errors?
 3. **Remove only obvious errors (initial values)**:
-   - EPA: MPG values > 200 (unless it's an EV with MPGe), MPG = 0, year in future
+   - EPA: MPG (Miles Per Gallon) values > 200 (unless it's an EV with MPGe), MPG = 0, year in future
    - NHTSA: Complaint dates in the future, mileage > 1,000,000 miles
    - DOE: Coordinates outside U.S. bounds (lat/lon = 0 or in the ocean)
 4. **Keep legitimate extremes (examples)**:
    - EPA: Tesla Model S with 100+ MPGe (real), heavy trucks with <15 MPG (real)
    - NHTSA: Vehicles with 500+ complaints (likely recalls, important to keep)
    - DOE: Stations in Alaska/Hawaii (unusual coordinates but valid)
+
+**Assumptions:**
+The 200 MPG threshold assumes that no production gas vehicle can exceed 150 MPG in real-world conditions (most hybrids max out at 50-60 MPG). Electric vehicles are exempt because they use MPGe (MPG-equivalent), which can legitimately reach 100-150+ for efficient EVs. The 1,000,000 mile threshold for NHTSA complaints assumes that values beyond this are data entry errors, as the average car lasts 150,000-200,000 miles and even commercial vehicles rarely exceed 500,000 miles.
 
 **Why:**
 Blindly removing outliers loses valuable information. High complaint counts indicate real problems. Extreme MPG values are often legitimate (EVs, hybrids). Manual inspection is worth the effort.
