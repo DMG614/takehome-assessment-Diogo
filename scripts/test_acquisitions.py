@@ -1,5 +1,42 @@
 import pandas as pd
-df = pd.read_csv('data/raw/vehicles.csv', low_memory=False)  # Handles large file
-print(df.head(5))  # First 5 rows
-print(df.shape)    # Row/column count
-print(df.columns)  # Column names
+
+print("=" * 80)
+print("1. EPA VEHICLE FUEL ECONOMY DATA")
+print("=" * 80)
+epa_df = pd.read_csv('data/raw/vehicles.csv', low_memory=False)
+print(f"\nShape: {epa_df.shape[0]} rows, {epa_df.shape[1]} columns")
+print(f"\nColumn names:\n{list(epa_df.columns)}")
+print(f"\nFirst 5 rows:")
+print(epa_df.head(5))
+print(f"\nData types:\n{epa_df.dtypes}")
+print(f"\nMissing values:\n{epa_df.isnull().sum()}")
+
+print("\n" + "=" * 80)
+print("2. NHTSA VEHICLE COMPLAINTS DATA")
+print("=" * 80)
+nhtsa_df = pd.read_csv('data/raw/COMPLAINTS_RECEIVED_2020-2024.txt', sep='\t', low_memory=False)
+print(f"\nShape: {nhtsa_df.shape[0]} rows, {nhtsa_df.shape[1]} columns")
+print(f"\nColumn names:\n{list(nhtsa_df.columns)}")
+print(f"\nFirst 5 rows:")
+print(nhtsa_df.head(5))
+print(f"\nData types:\n{nhtsa_df.dtypes}")
+print(f"\nMissing values:\n{nhtsa_df.isnull().sum()}")
+
+print("\n" + "=" * 80)
+print("3. DOE ALTERNATIVE FUEL STATIONS DATA")
+print("=" * 80)
+doe_df = pd.read_csv('data/raw/alt_fuel_stations.csv', low_memory=False)
+print(f"\nShape: {doe_df.shape[0]} rows, {doe_df.shape[1]} columns")
+print(f"\nColumn names:\n{list(doe_df.columns)}")
+print(f"\nFirst 5 rows:")
+print(doe_df.head(5))
+print(f"\nData types:\n{doe_df.dtypes}")
+print(f"\nMissing values:\n{doe_df.isnull().sum()}")
+
+print("\n" + "=" * 80)
+print("SUMMARY")
+print("=" * 80)
+print(f"EPA Vehicles: {epa_df.shape[0]:,} records")
+print(f"NHTSA Complaints: {nhtsa_df.shape[0]:,} records")
+print(f"DOE Fuel Stations: {doe_df.shape[0]:,} records")
+print(f"\nTotal records across all datasets: {epa_df.shape[0] + nhtsa_df.shape[0] + doe_df.shape[0]:,}")
