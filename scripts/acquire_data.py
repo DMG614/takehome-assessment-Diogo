@@ -3,6 +3,10 @@ import os
 import zipfile  # For unzipping EPA file
 import json
 import pandas as pd  # For converting DOE JSON to CSV; pip install pandas if needed
+from dotenv import load_dotenv  # For loading environment variables
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Create directories if they don't exist
 os.makedirs('data/raw', exist_ok=True)
