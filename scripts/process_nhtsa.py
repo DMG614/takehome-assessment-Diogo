@@ -64,7 +64,14 @@ print(f"Remaining: {len(df):,} records")
 # 5. Convert DATEA to string format for CSV storage
 df['DATEA'] = df['DATEA'].dt.strftime('%Y-%m-%d')
 
-# 6. Save cleaned data
+# 6. Convert numeric fields to integers (remove .0 formatting)
+print("\nConvert numeric fields to proper integer types:")
+# YEARTXT: convert to int (no nulls after filtering)
+df['YEARTXT'] = df['YEARTXT'].astype(int)
+# MILEAGE: convert to Int64 (nullable integer) to handle any potential nulls
+df['MILEAGE'] = df['MILEAGE'].astype('Int64')
+
+# 7. Save cleaned data
 print("\nSave cleaned data:")
 output_path = 'data/processed/nhtsa_complaints_clean.csv'
 df.to_csv(output_path, index=False)

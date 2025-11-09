@@ -135,26 +135,106 @@ DATEA was converted to datetime for validation, but when its saved to CSV, datet
 
 This makes the CSV file easier to read and more portable.
 
-<!-- CONFIRME THIS up -->
+### Step 6: Convert numeric fields to integers
 
-### Step 6: Save and summarize
+To improve readability in the CSV file, numeric fields are converted to integers to avoid the `.0` formatting (e.g., `2018` instead of `2018.0`):
+
+**YEARTXT conversion:** Since all critical year values are present (no nulls after filtering), YEARTXT is converted to standard `int64`. This ensures the CSV displays years as `2018` rather than `2018.0`.
+
+**MILEAGE handling:** MILEAGE has 63.7% null values (262,880 out of 412,704 records). It was converted to `Int64` (nullable integer) during processing, but when saved to CSV, pandas must use `float64` to represent NaN values. This is a CSV format limitation - there's no way to store integers with null values in plain CSV without using float. The values appear as `15000.0` or `NaN` in the file, which is acceptable since MILEAGE is an optional field.
+
+### Step 7: Save and summarize
 
 Same as EPA: save to CSV and print a summary. 98.5% of the record were kept, meaning that most of the data is clean, just removing a few thousand outliers.
 
 ---
 
-## Key Differences Between the Two Scripts
+## DOE Fuel Stations Processing (`process_doe.py`)
 
-**EPA:** Heavy filtering (60% removed). Strategic choices were made about what time period and data quality is needed.
+**Input:** `data/raw/alt_fuel_stations.csv` (96,829 records, 76 columns)
+**Output:** `data/processed/doe_fuel_stations_clean.csv` (92,366 records, 15 columns)
+**Retention rate:** 95.4%
+
+### What's being done here
+
+The DOE file contains alternative fuel station locations across the United States. This includes electric vehicle charging stations, CNG, LNG, biodiesel, E85, and hydrogen stations. The data is relatively clean but needs geographic validation and filtering to focus on truly alternative fuels.
+
+### Step 1: Load the raw data
+
+Simple CSV read with `low_memory=False` to ensure proper data type inference across all 76 columns. The DOE data comes from the NREL API and is well-structured with headers.
+
+### Step 2: Remove records with missing critical fields
+
+A fuel station record is useless if its location is unknown or the fuel type is missing (assumption). Any row missing latitude, longitude, fuel_type_code, or status_code is dropped.
+
+The DOE dataset is very well-maintained, so this step removes zero records. All critical fields are present.
+
+### Step 3: Remove obvious outliers
+
+Two types of geographic errors are removed:
+
+**Coordinates outside U.S. bounds:** For this project, it was assumed that valid U.S. fuel stations must be within latitude 18-72 (Hawaii to Alaska) and longitude -180 to -65 (West to East Coast). These ranges were chosen to cover all U.S. territories including Alaska and Hawaii. This catches data entry errors where coordinates might be swapped or incorrect.
+
+**Zero coordinates (0,0):** If both latitude and longitude are exactly zero, it's a clear data entry error (the real 0,0 coordinate is in the Gulf of Guinea off the coast of Africa).
+
+This step removes only 2 records, confirming the data quality is excellent.
+
+### Step 4: Remove exact duplicates
+
+Each station should have a unique ID. If the same ID appears twice, it's a system duplicate. Duplicates are dropped based on the ID field.
+
+Interestingly, there are *zero* duplicates in this dataset. The DOE database has strong unique constraints.
+
+### Step 5: Filter to relevant alternative fuel types
+
+The raw data includes some non-alternative fuel stations (gasoline, diesel). Only truly alternative fuel types are kept:
+- **ELEC** - Electric vehicle charging
+- **LNG** - Liquefied natural gas
+- **CNG** - Compressed natural gas
+- **BD** - Biodiesel
+- **E85** - 85% ethanol blend
+- **HY** - Hydrogen
+
+This removes 4,461 stations that don't qualify as alternative fuel infrastructure.
+
+### Step 6: Select relevant columns
+
+The raw file has 76 columns. Most are specialized fields for specific analyses. It was narrowed down to 15 essential columns:
+
+- Fuel information: fuel_type_code
+- Station identification: station_name, id
+- Location details: street_address, city, state, zip, latitude, longitude
+- Operational info: status_code, access_code, open_date
+- EV-specific: ev_network, ev_connector_types, ev_pricing (for electric stations)
+
+Everything else is dropped to keep the output focused.
+
+**Note on EV-specific fields:** The three EV columns (ev_network, ev_connector_types, ev_pricing) are only populated for ELEC (electric charging) stations. For other fuel types like CNG, LNG, BD, E85, and HY, these fields naturally contain empty values (NaN). This is expected behavior, not a data quality issue. Since ~91% of the stations in the cleaned dataset are ELEC, most records have these fields populated. The remaining ~9% (CNG, LNG, BD, E85, HY) will show empty values for EV-specific fields because these columns don't apply to non-electric fuel infrastructure.
+
+### Step 7: Save and summarize
+
+The cleaned data was saved to CSV and a summary was printed. 95.4% of the records were kept, showing that the DOE data is already very clean with minimal data quality issues.
+
+---
+
+## Key Differences Between the Three Scripts
+
+**EPA:** Heavy filtering (60% removed). Strategic choices were made about what time period and data quality is needed. Temporal filtering from 2010+ removes the majority of records.
 
 **NHTSA:** Light cleaning (1.5% removed). The data is already pretty clean, it was only needed to fix types and to remove obvious errors.
+
+**DOE:** Minimal cleaning (4.6% removed). Excellent data quality from the source. Main task is filtering to alternative fuels and validating geographic coordinates.
 
 **EPA:** File has headers, normal CSV structure.
 
 **NHTSA:** No headers, tab-separated, required manual column mapping with `usecols`.
 
+**DOE:** File has headers, normal CSV structure from API response.
+
 **EPA:** Focused on deduplication across multiple fields (year + make + model + specs).
 
 **NHTSA:** Focused on single-field deduplication (ODINO).
 
-Both scripts follow the same general flow: load → clean critical fields → remove outliers → deduplicate → select columns → save. The specifics vary based on what the data looks like and what is trying to be accomplished.
+**DOE:** Focused on single-field deduplication (station ID).
+
+All three scripts follow the same general flow: load → clean critical fields → remove outliers → deduplicate → select columns → save. The specifics vary based on what the data looks like and what is trying to be accomplished.

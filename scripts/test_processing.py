@@ -170,9 +170,7 @@ else:
 print(f"\nTests passed: {tests_passed}/{tests_total}")
 
 # 2. NHTSA COMPLAINTS - VALIDATION TESTS
-print("\n" + "="*80)
 print("2. NHTSA Complaints - validation tests")
-print("="*80)
 
 nhtsa_df = pd.read_csv('data/processed/nhtsa_complaints_clean.csv')
 
@@ -271,6 +269,104 @@ else:
 
 print(f"\nTests passed: {tests_passed}/{tests_total}")
 
-# 3. DOE FUEL STATIONS - VALIDATION TESTS 
-print("3. DOE Fuel Stations - VALIDATION TESTS")
-print("(Not yet implemented - waiting for process_doe.py)")
+# 3. DOE FUEL STATIONS - VALIDATION TESTS
+print("3. DOE Fuel Stations - validation tests")
+
+doe_df = pd.read_csv('data/processed/doe_fuel_stations_clean.csv')
+
+print(f"\nTEST 1: Basic Statistics")
+print(f"Count of Records: {len(doe_df):,}")
+print(f"Total columns: {len(doe_df.columns)}")
+print(f"Columns: {list(doe_df.columns)}")
+
+# Test 2: Missing Critical Fields
+print(f"\nTEST 2: Missing Critical Fields")
+critical_fields = ['latitude', 'longitude', 'fuel_type_code', 'status_code']
+missing_counts = {}
+for field in critical_fields:
+    missing = doe_df[field].isna().sum()
+    missing_counts[field] = missing
+    print(f"{field}: {missing} missing values")
+
+all_critical_complete = all(count == 0 for count in missing_counts.values())
+print(f"PASS: No missing critical fields" if all_critical_complete else f"FAIL: Found missing critical fields")
+
+# Test 3: Geographic Bounds Validation
+print(f"\nTEST 3: Geographic Bounds Validation")
+# Check for coordinates within U.S. bounds (including Alaska and Hawaii)
+# Latitude: 18 (Hawaii) to 72 (Alaska)
+# Longitude: -180 (Alaska) to -65 (East Coast)
+out_of_bounds_lat = len(doe_df[(doe_df['latitude'] < 18) | (doe_df['latitude'] > 72)])
+out_of_bounds_lon = len(doe_df[(doe_df['longitude'] < -180) | (doe_df['longitude'] > -65)])
+zero_coords = len(doe_df[(doe_df['latitude'] == 0) & (doe_df['longitude'] == 0)])
+
+print(f"Records with latitude out of bounds (18-72): {out_of_bounds_lat}")
+print(f"Records with longitude out of bounds (-180 to -65): {out_of_bounds_lon}")
+print(f"Records with coordinates at (0,0): {zero_coords}")
+
+geographic_valid = (out_of_bounds_lat == 0 and out_of_bounds_lon == 0 and zero_coords == 0)
+print(f"PASS: All coordinates within valid bounds" if geographic_valid else f"FAIL: Found invalid coordinates")
+
+# Test 4: Fuel Type Validation
+print(f"\nTEST 4: Fuel Type Validation")
+valid_fuel_types = ['ELEC', 'LNG', 'CNG', 'BD', 'E85', 'HY']
+invalid_fuel_types = doe_df[doe_df['fuel_type_code'].isin(valid_fuel_types) == False]
+print(f"Records with invalid fuel types: {len(invalid_fuel_types)}")
+print(f"PASS: All fuel types are alternative fuels" if len(invalid_fuel_types) == 0 else f"FAIL: Found {len(invalid_fuel_types)} invalid fuel types")
+
+# Test 5: Duplicate Detection
+print(f"\nTEST 5: Duplicate Detection")
+
+duplicates = doe_df.duplicated(subset=['id'], keep=False)
+duplicate_count = duplicates.sum()
+print(f"Exact duplicates found (by ID): {duplicate_count}")
+
+print(f"PASS: No duplicates" if duplicate_count == 0 else f"FAIL: Found {duplicate_count} duplicate records")
+
+# Test 6: Data Distribution Analysis
+print(f"\nTEST 6: Data Distribution Analysis")
+print(f"\nFuel Type Distribution:")
+print(doe_df['fuel_type_code'].value_counts())
+
+print(f"\nTop 10 States by Station Count:")
+if 'state' in doe_df.columns:
+    print(doe_df['state'].value_counts().head(10))
+
+print(f"\nStatus Distribution:")
+if 'status_code' in doe_df.columns:
+    print(doe_df['status_code'].value_counts())
+
+print(f"\nAccess Type Distribution:")
+if 'access_code' in doe_df.columns:
+    print(doe_df['access_code'].value_counts())
+
+# Summary
+print("\nDOE VALIDATION SUMMARY:")
+tests_passed = 0
+tests_total = 4
+
+if all_critical_complete:
+    print("PASS: No missing critical fields")
+    tests_passed += 1
+else:
+    print("FAIL: Missing critical fields found")
+
+if geographic_valid:
+    print("PASS: All coordinates within valid bounds")
+    tests_passed += 1
+else:
+    print("FAIL: Found invalid coordinates")
+
+if len(invalid_fuel_types) == 0:
+    print("PASS: All fuel types are alternative fuels")
+    tests_passed += 1
+else:
+    print(f"FAIL: Found {len(invalid_fuel_types)} invalid fuel types")
+
+if duplicate_count == 0:
+    print("PASS: No duplicates")
+    tests_passed += 1
+else:
+    print(f"FAIL: Found {duplicate_count} duplicate records")
+
+print(f"\nTests passed: {tests_passed}/{tests_total}")

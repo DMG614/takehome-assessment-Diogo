@@ -41,7 +41,7 @@
 | `MILEAGE` | Odometer reading at complaint |
 | `VIN` | Vehicle Identification Number |
 
-## DOE Fuel Stations (Raw)
+## DOE Fuel Stations (Cleaned)
 
 | Column | Description |
 |--------|-------------|
@@ -56,6 +56,9 @@
 | `status_code` | Status: E (available), P (planned), T (temporarily unavailable) |
 | `access_code` | Access type (public or private) |
 | `open_date` | Date station opened |
-| `ev_network` | EV charging network (ChargePoint, Tesla Supercharger, Electrify America, etc.) |
-| `ev_connector_types` | Types of charging connectors available (CHAdeMO, CCS, J1772, Tesla) |
-| `ev_pricing` | Pricing information for charging |
+| `ev_network` | EV charging network (ChargePoint, Tesla Supercharger, Electrify America, etc.) - applies to ELEC stations |
+| `ev_connector_types` | Types of charging connectors available (CHAdeMO, CCS, J1772, Tesla) - applies to ELEC stations |
+| `ev_pricing` | Pricing information for charging - applies to ELEC stations |
+| `id` | Unique station ID |
+
+**Note:** The cleaned dataset includes only alternative fuel stations. Traditional gasoline and diesel stations have been filtered out.
