@@ -209,3 +209,7 @@ __marimo__/
 # Raw data – large files (EPA, NHTSA, DOE)
 data/raw/*
 !data/raw/.gitkeep
+
+# Processed data – cleaned outputs
+data/processed/*
+!data/processed/.gitkeep
