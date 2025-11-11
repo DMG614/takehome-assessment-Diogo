@@ -213,3 +213,7 @@ data/raw/*
 # Processed data – cleaned outputs
 data/processed/*
 !data/processed/.gitkeep
+
+# Integrated data – joined datasets
+data/integrated/*
+!data/integrated/.gitkeep
