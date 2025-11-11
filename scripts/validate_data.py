@@ -39,8 +39,8 @@ def validate_vehicles(df):
     """Check vehicle data quality."""
     issues = []
 
-    # Year range
-    if df['year'].min() < 1984 or df['year'].max() > 2025:
+    # Year range (EPA data filtered to 2010+)
+    if df['year'].min() < 2010 or df['year'].max() > 2025:
         issues.append(f"year out of range: {df['year'].min()}-{df['year'].max()}")
 
     # MPG positive

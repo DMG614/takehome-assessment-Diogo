@@ -127,7 +127,7 @@ if all(col in epa_df.columns for col in ['city08', 'highway08', 'comb08']):
         print(inconsistent[['year', 'make', 'model', 'city08', 'highway08', 'comb08']].head())
 
 # Summary
-print("EPA VALIDATION SUMMARY")
+print("EPA Validation Summary")
 tests_passed = 0
 tests_total = 6
 
@@ -239,7 +239,7 @@ if 'DEATHS' in nhtsa_df.columns:
         print(f" - Total deaths: {int(deaths_count):,}")
 
 # Summary
-print("\nNHTSA VALIDATION SUMMARY:")
+print("\nNHTSA Validation Summary:")
 tests_passed = 0
 tests_total = 4
 
@@ -341,7 +341,7 @@ if 'access_code' in doe_df.columns:
     print(doe_df['access_code'].value_counts())
 
 # Summary
-print("\nDOE VALIDATION SUMMARY:")
+print("\nDOE Validation Summary:")
 tests_passed = 0
 tests_total = 4
 
