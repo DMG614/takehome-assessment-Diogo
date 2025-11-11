@@ -1,0 +1,9 @@
+# Core data processing
+pandas==2.2.0
+pyarrow==15.0.0
+
+# HTTP requests for API data acquisition
+requests==2.31.0
+
+# Environment variable management
+python-dotenv==1.0.1

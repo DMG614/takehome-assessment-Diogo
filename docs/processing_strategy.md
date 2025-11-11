@@ -211,12 +211,9 @@ This way we can get richer analysis.
 **Decision: Standardize for Joining**
 
 **Process:**
-- **Lowercase** make/model names for case-insensitive matching
-- **Remove special characters** (hyphens, underscores, extra spaces)
-- **Standardize common abbreviations**:
-  - "Chevrolet" → "CHEVROLET" (or all to "CHEVY" for consistency)
-  - "Mercedes-Benz" → "MERCEDES BENZ"
+- **Uppercase** make/model names for case-insensitive matching
 - **Strip leading/trailing whitespace**
+- Special characters and abbreviations are kept as-is (simple normalization approach)
 
 **Why:**
 The goal is to make datasets **joinable**, so simple standardization is enough to enable merging.
