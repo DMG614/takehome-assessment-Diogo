@@ -170,30 +170,6 @@ COMPUTE STATISTICS;
 - **OPTIMIZE**: Combines small files into larger ones (faster reads)
 - **ANALYZE**: Updates statistics for query planner (better execution plans)
 
-### Step 5: Validate Data
-
-Check data quality after loading:
-
-```sql
--- Verify row count
-SELECT COUNT(*) FROM automotive_data.analytics.vehicle_complaints_analysis;
-
--- Check for nulls in key columns
-SELECT
-  SUM(CASE WHEN year IS NULL THEN 1 ELSE 0 END) AS null_years,
-  SUM(CASE WHEN make IS NULL THEN 1 ELSE 0 END) AS null_makes,
-  SUM(CASE WHEN model IS NULL THEN 1 ELSE 0 END) AS null_models
-FROM automotive_data.analytics.vehicle_complaints_analysis;
-
--- Validate data ranges
-SELECT
-  MIN(year) AS min_year,
-  MAX(year) AS max_year,
-  MIN(comb08) AS min_mpg,
-  MAX(comb08) AS max_mpg
-FROM automotive_data.analytics.vehicle_complaints_analysis;
-```
-
 ## Error Handling
 
 ### Potential Issues

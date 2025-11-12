@@ -6,9 +6,8 @@ This document walks through what each processing script does and why. The goal i
 
 ## EPA Vehicles Processing (`process_epa.py`)
 
-**Input:** `data/raw/vehicles.csv` (49,582 records, 84 columns)
-**Output:** `data/processed/epa_vehicles_clean.csv` (19,952 records, 15 columns)
-**Retention rate:** 40.2%
+**Input:** `data/raw/vehicles.csv`
+**Output:** `data/processed/epa_vehicles_clean.csv`
 
 ### What's being done here
 
@@ -52,7 +51,7 @@ They're all considered, because a 2020 Honda Accord LX (2.0L, CVT, FWD, 30 MPG) 
 
 ### Step 6: Select relevant columns
 
-The raw file has 84 columns. Most are niche fields like "fuel cost per year in 2008 dollars" or "EPA vehicle size class code.". It was narrowed down to 16 essential columns:
+Most if the columns are niche fields like "fuel cost per year in 2008 dollars" or "EPA vehicle size class code.". It was narrowed down to 16 essential columns:
 
 - Vehicle identifiers: year, make, model, class
 - Performance specs: engine displacement, cylinders, transmission, drive type
@@ -97,9 +96,8 @@ The cleaned data was saved to CSV. The summary now shows:
 
 ## NHTSA Complaints Processing (`process_nhtsa.py`)
 
-**Input:** `data/raw/COMPLAINTS_RECEIVED_2020-2024.txt` (418,787 records, 49 columns)
-**Output:** `data/processed/nhtsa_complaints_clean.csv` (412,704 records, 14 columns)
-**Retention rate:** 98.5%
+**Input:** `data/raw/COMPLAINTS_RECEIVED_2020-2024.txt` 
+**Output:** `data/processed/nhtsa_complaints_clean.csv` 
 
 ### What's been done here
 
@@ -168,19 +166,18 @@ To improve readability in the CSV file, numeric fields are converted to integers
 
 **YEARTXT conversion:** Since all critical year values are present (no nulls after filtering), YEARTXT is converted to standard `int64`. This ensures the CSV displays years as `2018` rather than `2018.0`.
 
-**MILEAGE handling:** MILEAGE has 63.7% null values (262,880 out of 412,704 records). It was converted to `Int64` (nullable integer) during processing, but when saved to CSV, pandas must use `float64` to represent NaN values. This is a CSV format limitation - there's no way to store integers with null values in plain CSV without using float. The values appear as `15000.0` or `NaN` in the file, which is acceptable since MILEAGE is an optional field.
+**MILEAGE handling:** MILEAGE has a big percentage of nulls. It was converted to `Int64` (nullable integer) during processing, but when saved to CSV, pandas must use `float64` to represent NaN values. This is a CSV format limitation - there's no way to store integers with null values in plain CSV without using float. The values appear as `15000.0` or `NaN` in the file, which is acceptable since MILEAGE is an optional field.
 
 ### Step 7: Save and summarize
 
-Same as EPA: save to CSV and print a summary. 98.5% of the record were kept, meaning that most of the data is clean, just removing a few thousand outliers.
+Same as EPA: save to CSV and print a summary. A big percentage of the record were kept, meaning that most of the data is clean, just removing a few thousand outliers.
 
 ---
 
 ## DOE Fuel Stations Processing (`process_doe.py`)
 
-**Input:** `data/raw/alt_fuel_stations.csv` (96,829 records, 76 columns)
-**Output:** `data/processed/doe_fuel_stations_clean.csv` (92,366 records, 15 columns)
-**Retention rate:** 95.4%
+**Input:** `data/raw/alt_fuel_stations.csv` 
+**Output:** `data/processed/doe_fuel_stations_clean.csv`
 
 ### What's being done here
 
@@ -222,11 +219,10 @@ The raw data includes some non-alternative fuel stations (gasoline, diesel). Onl
 - **E85** - 85% ethanol blend
 - **HY** - Hydrogen
 
-This removes 4,461 stations that don't qualify as alternative fuel infrastructure.
 
 ### Step 6: Select relevant columns
 
-The raw file has 76 columns. Most are specialized fields for specific analyses. It was narrowed down to 15 essential columns:
+Most of the columns are specialized fields for specific analyses. It was narrowed down to 15 essential columns:
 
 - Fuel information: fuel_type_code
 - Station identification: station_name, id
@@ -236,21 +232,21 @@ The raw file has 76 columns. Most are specialized fields for specific analyses. 
 
 Everything else is dropped to keep the output focused.
 
-**Note on EV-specific fields:** The three EV columns (ev_network, ev_connector_types, ev_pricing) are only populated for ELEC (electric charging) stations. For other fuel types like CNG, LNG, BD, E85, and HY, these fields naturally contain empty values (NaN). This is expected behavior, not a data quality issue. Since ~91% of the stations in the cleaned dataset are ELEC, most records have these fields populated. The remaining ~9% (CNG, LNG, BD, E85, HY) will show empty values for EV-specific fields because these columns don't apply to non-electric fuel infrastructure.
+**Note on EV-specific fields:** The three EV columns (ev_network, ev_connector_types, ev_pricing) are only populated for ELEC (electric charging) stations. For other fuel types like CNG, LNG, BD, E85, and HY, these fields naturally contain empty values (NaN). This is expected behavior, not a data quality issue. Since the most part of the stations in the cleaned dataset are ELEC, most records have these fields populated. The remaining (CNG, LNG, BD, E85, HY) will show empty values for EV-specific fields because these columns don't apply to non-electric fuel infrastructure.
 
 ### Step 7: Save and summarize
 
-The cleaned data was saved to CSV and a summary was printed. 95.4% of the records were kept, showing that the DOE data is already very clean with minimal data quality issues.
+The cleaned data was saved to CSV and a summary was printed. Most of the records were kept, showing that the DOE data is already very clean with minimal data quality issues.
 
 ---
 
 ## Key Differences Between the Three Scripts
 
-**EPA:** Heavy filtering (60% removed). Strategic choices were made about what time period and data quality is needed. Temporal filtering from 2010+ removes the majority of records.
+**EPA:** Heavy filtering. Strategic choices were made about what time period and data quality is needed. Temporal filtering from 2010+ removes the majority of records.
 
-**NHTSA:** Light cleaning (1.5% removed). The data is already pretty clean, it was only needed to fix types and to remove obvious errors.
+**NHTSA:** Light cleaning. The data is already pretty clean, it was only needed to fix types and to remove obvious errors.
 
-**DOE:** Minimal cleaning (4.6% removed). Excellent data quality from the source. Main task is filtering to alternative fuels and validating geographic coordinates.
+**DOE:** Minimal cleaning. Excellent data quality from the source. Main task is filtering to alternative fuels and validating geographic coordinates.
 
 **EPA:** File has headers, normal CSV structure.
 

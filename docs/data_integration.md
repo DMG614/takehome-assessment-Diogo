@@ -12,9 +12,9 @@ As an automotive supplier, understanding the connections between vehicle perform
 
 The integration process uses three cleaned datasets:
 
-1. **EPA Vehicles** (`epa_vehicles_clean.csv`): 19,952 records with fuel economy data
-2. **NHTSA Complaints** (`nhtsa_complaints_clean.csv`): 412,704 complaint records
-3. **DOE Fuel Stations** (`doe_fuel_stations_clean.csv`): 92,366 alternative fuel stations
+1. **EPA Vehicles** (`epa_vehicles_clean.csv`): ~19,000 records with fuel economy data
+2. **NHTSA Complaints** (`nhtsa_complaints_clean.csv`): ~400,000 complaint records
+3. **DOE Fuel Stations** (`doe_fuel_stations_clean.csv`): ~90,000 alternative fuel stations
 
 ## Integrated Datasets (3 Total)
 
@@ -37,7 +37,10 @@ The integration process uses three cleaned datasets:
 | drive | string | Drivetrain type |
 | cylinders | float | Number of cylinders |
 | displ | float | Engine displacement (liters) |
-| fuelType | string | Primary fuel type |
+| primary_fuel | string | Primary fuel type (semantic naming) |
+| secondary_fuel | string | Secondary fuel type for dual-fuel vehicles |
+| fuel_used | string | The specific fuel this row represents |
+| fuel_rank | int | Fuel priority rank: 1=primary, 2=secondary |
 | city08 | int | City MPG |
 | highway08 | int | Highway MPG |
 | comb08 | int | Combined MPG |
@@ -60,7 +63,7 @@ The integration process uses three cleaned datasets:
    - Useful for supplier partnerships and component targeting
 
 3. **Are electric vehicles more reliable than gas vehicles?**
-   - Filter by `fuelType` and compare complaint rates
+   - Filter by `fuel_used` and compare complaint rates
    - Strategic insight for EV component suppliers
 
 4. **Which vehicle classes have the most safety issues?**

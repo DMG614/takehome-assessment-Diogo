@@ -19,7 +19,9 @@ The goal is not to achieve perfect cleanliness, but to make thoughtful, document
 - `year` - Model year
 - `make`, `model` - Vehicle identification
 - `city08`, `highway08`, `comb08` - MPG ratings (city, highway, combined)
-- `fuelType` - Primary fuel type (Gasoline, Diesel, Electric, etc.)
+- `primary_fuel`, `secondary_fuel` - Fuel types (semantic naming)
+- `fuel_used` - The specific fuel type this row represents (after explosion)
+- `fuel_rank` - Fuel priority rank: 1=primary, 2=secondary
 - `co2TailpipeGpm` - CO2 emissions (grams per mile)
 - `VClass` - Vehicle class (sedan, SUV, pickup, etc.)
 - `cylinders`, `displ` - Engine specs (cylinder count, displacement)
@@ -79,7 +81,7 @@ The goal is not to achieve perfect cleanliness, but to make thoughtful, document
 - 15 years of data (2010–2025) is sufficient for identifying trends without sacrificing data quality
 
 **Trade-off:**
-We lose historical perspective on how fuel economy evolved from the 1980s onward, but we gain cleaner data and more relevant comparisons.
+Historical perspective is lost on how fuel economy evolved from the 1980s onward, but cleaner data is achieved and more relevant comparisons.
 
 **What Gets Filtered:**
 - EPA: Keep only `year >= 2010`
@@ -110,7 +112,7 @@ At first, the initial thoughts is to drop critical (which is missing values) but
 | DOE | `ev_network`, pricing, access hours | Keep row, reflects real-world incomplete data |
 
 **Why:**
-We can't analyze a vehicle if we don't know what it is (make/model/year) or how efficient it is (MPG). But we can tolerate missing secondary attributes like CO2 or mileage because they don't invalidate the core record.
+A vehicle can't be analyzed if it's not clear what it is (make/model/year) or how efficient it is (MPG). But it's tolerated to miss secondary attributes like CO2 or mileage because they don't invalidate the core record.
 
 **Expected Impact:**
 Minimal row loss for EPA and DOE (these fields are well-populated). Some NHTSA row loss if complaint IDs or vehicle identifiers are missing, but that's acceptable because incomplete complaints aren't useful.
@@ -122,7 +124,7 @@ Minimal row loss for EPA and DOE (these fields are well-populated). Some NHTSA r
 **Decision: Flag First, Remove Only if Clearly Erroneous**
 
 **Approach:**
-1. **Identify outliers statistically** using IQR (Interquartile Range), which is a method that flags values significantly beyond the typical middle range of the data. IQR measures the spread of the middle 50% of values, and anything 1.5× that spread above or below the typical range is flagged as unusual.
+1. **Identify outliers statistically** using IQR (Interquartile Range) to flag values that fall far outside the normal range.
 2. **Inspect flagged records** - are they legitimate edge cases or data errors?
 3. **Remove only obvious errors (initial values)**:
    - EPA: MPG (Miles Per Gallon) values > 200 (unless it's an EV with MPGe), MPG = 0, year in future
@@ -140,7 +142,7 @@ The 200 MPG threshold assumes that no production gas vehicle can exceed 150 MPG 
 Blindly removing outliers loses valuable information. High complaint counts indicate real problems. Extreme MPG values are often legitimate (EVs, hybrids). Manual inspection is worth the effort.
 
 **What Gets Removed:**
-- EPA: Vehicles with MPG > 200 unless `fuelType` contains "Electric"
+- EPA: Vehicles with MPG > 200 unless `fuel_used` contains "Electric"
 - DOE: Stations with `latitude < 24` or `> 50`, `longitude < -125` or `> -65` (rough US bounds)
 - NHTSA: Complaints with `DATEA` after today's date
 
@@ -202,8 +204,7 @@ A table like this:
 | 2020 | Toyota | Camry | 32 | 47 | Engine |
 | 2021 | Ford | F150 | 22 | 203 | Transmission |
 
-This way we can get richer analysis.
-
+Richer analysis is achieved, with this method.
 ---
 
 ### 6. Dual-Fuel Vehicle Handling

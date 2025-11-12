@@ -4,7 +4,7 @@ This document covers the main issues/challenges encountered during the pipeline 
 
 ## Data Acquisition Strategy
 
-There was an early decision to make: download data via APIs/bulk files versus committing pre-downloaded CSV files to the repository.
+There was an early decision to make: download data via APIs/bulk files or committing pre-downloaded CSV files to the repository.
 
 Committing pre-downloaded CSV files would make the pipeline simpler and faster to run. Anyone could clone the repo and immediately run the processing scripts without needing API keys or internet access. The data files would be version-controlled alongside the code.
 
@@ -18,7 +18,7 @@ Each data source uses different naming conventions. EPA might have "Ford F150", 
 
 The join strategy normalizes by uppercasing make/model names and matching on year + make + model. A left join is used to keep all EPA vehicles. Those without matching complaints simply get 0 for complaint fields.
 
-A big percentage of EPA vehicles have zero complaints in the integrated dataset. This is expected behavior, not a data quality issue. Most vehicles don't have safety complaints filed, only those with notable problems get owner complaints submitted to NHTSA. The little percentage of vehicles that DO have complaints represent problematic vehicles, which is exactly the signal needed for safety analysis.
+A big percentage of EPA vehicles have zero complaints in the integrated dataset. This is expected behavior, not a data quality issue. Most vehicles don't have safety complaints filed, only those with notable problems get owner complaints submitted to NHTSA. The little percentage of vehicles that do have complaints represent problematic vehicles, which is exactly the signal needed for safety analysis.
 
 Some complaint matches might still be missed due to name variations (like "F150" vs "F-150") or trim levels being treated as separate models, but the match rate is reasonable given that most vehicles legitimately have no complaints.
 
@@ -55,7 +55,7 @@ The challenge was deciding how to handle these vehicles in the fuel infrastructu
 
 The first approach considered was to keep vehicles as single rows but add a boolean flag like `supports_alternative_fuel` to identify vehicles that could use multiple fuel types. This would preserve the one-vehicle-per-row structure and avoid "inflating" row counts.
 
-**Why this was rejected:**
+This approach was rejected, because:
 - Infrastructure demand analysis requires counting vehicles by fuel type. With a flag approach, we'd still need special logic to decide: "Do we count this plug-in hybrid in the Gasoline category? The Electricity category? Both?"
 - Aggregations become ambiguous: `COUNT(*) WHERE fuel_type='Electricity'` would miss plug-in hybrids unless we added complex CASE statements throughout all queries
 - The flag doesn't solve the fundamental issue: one vehicle might use two different infrastructure types
@@ -116,7 +116,7 @@ Filtering to 2010+ keeps the dataset focused on modern vehicles where all three 
 
 When joining EPA and NHTSA with a left join, vehicles with no matching complaints end up with null values for all complaint columns (total_complaints, crash_incidents, fire_incidents, etc.). This creates ambiguity, does null mean "no data available" or "zero complaints filed"?
 
-The integration logic fills these nulls with 0, which assumes "no match = no complaints filed." This is implemented at line 82 of integrate_data.py using `fillna(0)` on all numeric complaint fields.
+The integration logic fills these nulls with 0, which assumes "no match = no complaints filed." This is implemented in integrate_data.py using `fillna(0)` on all numeric complaint fields.
 
 This is probably the correct interpretation for most cases. If a vehicle has no records in NHTSA's complaint database, it most likely has zero complaints rather than missing data. The result is that most of vehicles have zero complaints, which is expected since most vehicles don't have safety issues reported.
 
