@@ -28,14 +28,19 @@ Three integrated datasets are loaded into the data warehouse:
 ### 1. Vehicle Complaints Analysis
 - **Table Name**: `automotive_data.analytics.vehicle_complaints_analysis`
 - **Source**: `data/integrated/vehicle_complaints_analysis.csv`
+- **Rows**: ~21,357 vehicle-fuel combinations
+- **Note**: Dual-fuel vehicles appear twice (once per fuel type)
 
 ### 2. Fuel Infrastructure Analysis
 - **Table Name**: `automotive_data.analytics.fuel_infrastructure_analysis`
 - **Source**: `data/integrated/fuel_infrastructure_analysis.csv`
+- **Rows**: ~43 year-fuel type aggregations
 
 ### 3. Comprehensive Vehicle Analysis
 - **Table Name**: `automotive_data.analytics.comprehensive_vehicle_analysis`
 - **Source**: `data/integrated/comprehensive_vehicle_analysis.csv`
+- **Rows**: ~21,357 vehicle-fuel combinations
+- **Note**: Dual-fuel vehicles appear twice (once per fuel type)
 
 ## Loading Strategy: Full Refresh
 
@@ -90,7 +95,10 @@ CREATE OR REPLACE TABLE automotive_data.analytics.vehicle_complaints_analysis (
   drive STRING,
   cylinders DOUBLE,
   displ DOUBLE,
-  fuelType STRING,
+  primary_fuel STRING COMMENT 'Primary fuel type (semantic naming)',
+  secondary_fuel STRING COMMENT 'Secondary fuel type for dual-fuel vehicles',
+  fuel_used STRING COMMENT 'The specific fuel this row represents (either primary_fuel or secondary_fuel)',
+  fuel_rank INT COMMENT 'Fuel priority rank: 1=primary, 2=secondary (future-proof for tri-fuel)',
   city08 BIGINT,
   highway08 BIGINT,
   comb08 BIGINT,
@@ -104,6 +112,7 @@ CREATE OR REPLACE TABLE automotive_data.analytics.vehicle_complaints_analysis (
   vehicle_variants BIGINT
 )
 USING DELTA
+COMMENT 'Vehicle-fuel combinations with safety complaints. Dual-fuel vehicles appear twice.'
 LOCATION 'abfss://datalake@automotivestorage.dfs.core.windows.net/analytics/vehicle_complaints_analysis'
 TBLPROPERTIES (
   'delta.autoOptimize.optimizeWrite' = 'true',
@@ -160,30 +169,6 @@ COMPUTE STATISTICS;
 **Why Optimize?**
 - **OPTIMIZE**: Combines small files into larger ones (faster reads)
 - **ANALYZE**: Updates statistics for query planner (better execution plans)
-
-### Step 5: Validate Data
-
-Check data quality after loading:
-
-```sql
--- Verify row count
-SELECT COUNT(*) FROM automotive_data.analytics.vehicle_complaints_analysis;
-
--- Check for nulls in key columns
-SELECT
-  SUM(CASE WHEN year IS NULL THEN 1 ELSE 0 END) AS null_years,
-  SUM(CASE WHEN make IS NULL THEN 1 ELSE 0 END) AS null_makes,
-  SUM(CASE WHEN model IS NULL THEN 1 ELSE 0 END) AS null_models
-FROM automotive_data.analytics.vehicle_complaints_analysis;
-
--- Validate data ranges
-SELECT
-  MIN(year) AS min_year,
-  MAX(year) AS max_year,
-  MIN(comb08) AS min_mpg,
-  MAX(comb08) AS max_mpg
-FROM automotive_data.analytics.vehicle_complaints_analysis;
-```
 
 ## Error Handling
 

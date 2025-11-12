@@ -12,9 +12,9 @@ As an automotive supplier, understanding the connections between vehicle perform
 
 The integration process uses three cleaned datasets:
 
-1. **EPA Vehicles** (`epa_vehicles_clean.csv`): 19,952 records with fuel economy data
-2. **NHTSA Complaints** (`nhtsa_complaints_clean.csv`): 412,704 complaint records
-3. **DOE Fuel Stations** (`doe_fuel_stations_clean.csv`): 92,366 alternative fuel stations
+1. **EPA Vehicles** (`epa_vehicles_clean.csv`): ~19,000 records with fuel economy data
+2. **NHTSA Complaints** (`nhtsa_complaints_clean.csv`): ~400,000 complaint records
+3. **DOE Fuel Stations** (`doe_fuel_stations_clean.csv`): ~90,000 alternative fuel stations
 
 ## Integrated Datasets (3 Total)
 
@@ -37,7 +37,10 @@ The integration process uses three cleaned datasets:
 | drive | string | Drivetrain type |
 | cylinders | float | Number of cylinders |
 | displ | float | Engine displacement (liters) |
-| fuelType | string | Primary fuel type |
+| primary_fuel | string | Primary fuel type (semantic naming) |
+| secondary_fuel | string | Secondary fuel type for dual-fuel vehicles |
+| fuel_used | string | The specific fuel this row represents |
+| fuel_rank | int | Fuel priority rank: 1=primary, 2=secondary |
 | city08 | int | City MPG |
 | highway08 | int | Highway MPG |
 | comb08 | int | Combined MPG |
@@ -60,7 +63,7 @@ The integration process uses three cleaned datasets:
    - Useful for supplier partnerships and component targeting
 
 3. **Are electric vehicles more reliable than gas vehicles?**
-   - Filter by `fuelType` and compare complaint rates
+   - Filter by `fuel_used` and compare complaint rates
    - Strategic insight for EV component suppliers
 
 4. **Which vehicle classes have the most safety issues?**
@@ -81,7 +84,8 @@ The integration process uses three cleaned datasets:
 
 **Join Logic:**
 - Maps EPA fuel types to DOE fuel type codes (e.g., "Electricity" → "ELEC"), to normalize it
-- Aggregates vehicle counts by fuel type and year
+- Aggregates vehicle-fuel combinations by fuel type and year
+- **Important**: Dual-fuel vehicles (like plug-in hybrids) are counted in EACH fuel type category they support. A plug-in hybrid appears in both "Gasoline" and "Electricity" counts, accurately reflecting infrastructure demand.
 - Joins with fuel station counts nationwide
 - Calculates vehicles-per-station ratios
 
@@ -90,7 +94,7 @@ The integration process uses three cleaned datasets:
 |--------|------|-------------|
 | year | int | Vehicle model year |
 | fuel_type_code | string | DOE fuel type code (ELEC, CNG, E85, etc.) |
-| vehicle_count | int | Number of vehicles produced |
+| vehicle_count | int | Number of vehicle-fuel combinations (includes dual-fuel vehicles in multiple categories) |
 | avg_combined_mpg | float | Average combined MPG for this fuel type |
 | avg_city_mpg | float | Average city MPG |
 | avg_highway_mpg | float | Average highway MPG |
@@ -98,10 +102,15 @@ The integration process uses three cleaned datasets:
 | available_stations | int | Currently available stations |
 | vehicles_per_station | float | Ratio of vehicles to stations |
 
+**Example**: A 2020 Chevy Volt (plug-in hybrid) contributes to both:
+- Gasoline vehicle_count (can use gas stations)
+- Electricity vehicle_count (can use EV charging stations)
+
 **Business Questions Answered:**
 1. **Are there enough alternative fuel stations for alternative fuel vehicles?**
    - Compare `vehicle_count` against `available_stations`
    - Identify infrastructure gaps that may limit vehicle adoption
+   - Dual-fuel counting provides accurate demand estimates
 
 2. **Which fuel types have the worst infrastructure coverage?**
    - Analyze `vehicles_per_station` ratio

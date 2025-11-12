@@ -33,7 +33,6 @@ This dataset contains comprehensive fuel economy specifications for vehicles sol
 
 **Why This Approach:**
 - The EPA provides a bulk download file that delivers the entire dataset in one request
-<!-- - The ZIP format reduces download size from ~20MB to ~2MB -->
 - No API key or authentication required
 - Single download is more reliable than paginated API calls
 
@@ -120,7 +119,7 @@ Error handling covers:
 **Option B: NREL API (Chosen Approach)**
 - **Pros**: Official programmatic interface; designed for automation; returns structured JSON; supports full dataset retrieval; free and publicly available
 - **Cons**: Requires a one-time signup (2 minutes) and environment variable configuration
-- **Verdict**: The correct engineering solution. The API is the DOE's intended method for automated access.
+- **Verdict**: The correct engineering solution, in this situation. The API is the DOE's intended method for automated access.
 
 **Getting the API Key:**
 1. Go to https://developer.nrel.gov/signup/
@@ -131,7 +130,7 @@ Error handling covers:
 
 ---
 
-## How Automation Works
+## How Automation Works, in Data Acquisition
 
 ### Running the Script
 ```bash
@@ -157,16 +156,9 @@ Alternative fuel stations data downloaded: 96829 stations saved to data/raw/alt_
 5. **Directory Creation**: `data/raw/` is created if it doesn't exist
 
 ### No Manual Steps Required
-Once the API key is set up (one-time), the entire script runs without human intervention. This means it can be:
-- Scheduled with cron (Linux/Mac) or Task Scheduler (Windows)
-- Integrated into CI/CD pipelines
-- Run on a server or cloud instance
-- Triggered by workflow automation tools
+Once the API key is set up (one-time), the entire script runs without any intervention.
 
 This will be restudied in the future.
-
-### Why Full Automation Matters
-In a real data engineering context, pipelines need to refresh data on a schedule—daily, weekly, or when upstream sources update. Manual steps create bottlenecks, introduce errors, and don't scale. This script demonstrates that all three sources can be acquired programmatically, meeting the assessment's emphasis on repeatability and automation.
 
 ---
 
@@ -194,5 +186,5 @@ The API key is never hardcoded in the script or committed to Git. Using environm
 | NHTSA Complaints | Bulk ZIP download | Complete dataset in one file | API awkward for full retrieval |
 | DOE Alt Fuel Stations | NREL API | Only way to fully automate | Web form requires manual input |
  
-It was decided to **choose the method that best supports automation while maintaining reliability and simplicity**.
-For EPA and NHTSA, bulk files win. For DOE, the API is the only viable path to true automation.
+It was decided to choose the method that best supports automation while maintaining reliability and simplicity.
+For EPA and NHTSA, bulk files is the best approach. For DOE, the API is the best viable path to true automation.

@@ -74,12 +74,12 @@ columns_to_keep = [
     'VClass',  # Vehicle class (sedan, SUV, etc.)
     'drive',  # Drive type (FWD, RWD, AWD)
     'trany',  # Transmission
-    'cylinders', 
+    'cylinders',
     'displ',  # Engine specs
-    'fuelType', 
-    'fuelType1',  # Fuel types
-    'city08', 
-    'highway08', 
+    'fuelType1',
+    'fuelType2',  # Keep both fuel types for dual-fuel handling
+    'city08',
+    'highway08',
     'comb08',  # MPG ratings
     'co2TailpipeGpm',  # Emissions
     'id'  # Keep ID for reference
@@ -88,18 +88,51 @@ columns_to_keep = [
 # Only keep columns that exist in the dataframe
 columns_to_keep = [col for col in columns_to_keep if col in df.columns]
 df = df[columns_to_keep]
+
+# Rename fuel type columns to be more semantic
+df = df.rename(columns={
+    'fuelType1': 'primary_fuel',
+    'fuelType2': 'secondary_fuel'
+})
+
 print(f"Reduced from 84 to {len(columns_to_keep)} columns")
 
-# 7. Save cleaned data
+# 7. Handle dual-fuel vehicles (explode into multiple rows)
+print("\nHandle dual-fuel vehicles:")
+before_explosion_len = len(df)
+
+# Identify vehicles with secondary fuel type
+dual_fuel_vehicles = df[df['secondary_fuel'].notna()].copy()
+print(f"Found {len(dual_fuel_vehicles):,} dual-fuel vehicles")
+
+# Create two separate dataframes:
+# 1. All vehicles with their primary fuel
+df_primary = df.copy()
+df_primary['fuel_used'] = df_primary['primary_fuel']
+df_primary['fuel_rank'] = 1
+
+# 2. Dual-fuel vehicles with their secondary fuel
+df_secondary = dual_fuel_vehicles.copy()
+df_secondary['fuel_used'] = df_secondary['secondary_fuel']
+df_secondary['fuel_rank'] = 2
+
+# Combine both dataframes
+df = pd.concat([df_primary, df_secondary], ignore_index=True)
+
+print(f"Exploded {len(dual_fuel_vehicles):,} dual-fuel vehicles into {len(dual_fuel_vehicles) * 2:,} rows")
+print(f"Total records after explosion: {len(df):,} (was {before_explosion_len:,})")
+print(f"Added {len(df) - before_explosion_len:,} rows for secondary fuel types")
+
+# 8. Save cleaned data
 print("\nSave cleaned data")
 output_path = 'data/processed/epa_vehicles_clean.csv'
 df.to_csv(output_path, index=False)
 print(f"Saved to: {output_path}")
 
 # Summary
-print("End of EPA processing")
-print(f"Started with: {inital_df_len:,} records")
-print(f"Ended with:   {len(df):,} records")
-print(f"Kept {len(df)/inital_df_len*100:.1f}% of original data")
-print(f"Removed {inital_df_len - len(df):,} rows total")
+print("\nEnd of EPA processing")
+print(f"Started with: {inital_df_len:,} raw records")
+print(f"After cleaning: {before_explosion_len:,} unique vehicles")
+print(f"After dual-fuel explosion: {len(df):,} vehicle-fuel combinations")
+print(f"Note: Rows now represent vehicle-fuel combinations, not just vehicles")
 print(f"Columns: 84 → {len(df.columns)}")
