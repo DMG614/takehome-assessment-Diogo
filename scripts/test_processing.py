@@ -44,7 +44,7 @@ print(f"PASS: No zero MPG values" if mpg_zero == 0 else f"FAIL: Found {mpg_zero}
 high_mpg = epa_df[epa_df['comb08'] > 200]
 
 # Identify which vehicles are electric (high MPGe is normal for EVs)
-is_electric = high_mpg['fuelType'].str.contains('Electric', case=False, na=False)
+is_electric = high_mpg['fuel_used'].str.contains('Electric', case=False, na=False)
 
 # Keep only NON-electric vehicles with high MPG (these are errors)
 high_mpg_non_electric = high_mpg[is_electric == False]
@@ -53,7 +53,7 @@ print(f"Non-electric vehicles with MPG > 200: {len(high_mpg_non_electric)}")
 print(f"PASS: No invalid high MPG values" if len(high_mpg_non_electric) == 0 else f"FAIL: Found {len(high_mpg_non_electric)} invalid high MPG values")
 
 # Electric vehicles with high MPGe (should be allowed)
-high_mpg_electric = high_mpg[high_mpg['fuelType'].str.contains('Electric', case=False, na=False)]
+high_mpg_electric = high_mpg[high_mpg['fuel_used'].str.contains('Electric', case=False, na=False)]
 print(f"Electric vehicles with MPGe > 200: {len(high_mpg_electric)} (allowed)")
 
 # Future years
@@ -64,19 +64,35 @@ print(f"PASS: No future years" if future_years == 0 else f"FAIL: Found {future_y
 
 # Test 5: Duplicate Detection
 print(f"\nTEST 5: Duplicate Detection")
-key_fields = ['year', 'make', 'model', 'displ', 'cylinders', 'trany',
-              'drive', 'fuelType', 'comb08', 'city08', 'highway08']
+# After dual-fuel explosion, check for true duplicates by ID
+# The same vehicle ID should appear at most twice (once for each fuel_rank if dual-fuel)
+print(f"Note: After dual-fuel explosion, each vehicle can appear 1-2 times")
 
-# Check if all key fields exist
-existing_key_fields = [f for f in key_fields if f in epa_df.columns]
-duplicates = epa_df.duplicated(subset=existing_key_fields, keep=False)
-duplicate_count = duplicates.sum()
-print(f"Exact duplicates found: {duplicate_count}")
-print(f"PASS: No duplicates" if duplicate_count == 0 else f"FAIL: Found {duplicate_count} duplicate records")
+# Check for duplicate IDs with same fuel_rank (these would be true duplicates)
+id_rank_duplicates = epa_df.duplicated(subset=['id', 'fuel_rank'], keep=False)
+duplicate_count = id_rank_duplicates.sum()
+print(f"True duplicates found (same ID + fuel_rank): {duplicate_count}")
+
+# Check dual-fuel vehicle distribution
+fuel_rank_dist = epa_df.groupby('id')['fuel_rank'].nunique()
+dual_fuel_vehicles = (fuel_rank_dist == 2).sum()
+single_fuel_vehicles = (fuel_rank_dist == 1).sum()
+print(f"Single-fuel vehicles: {single_fuel_vehicles:,}")
+print(f"Dual-fuel vehicles: {dual_fuel_vehicles:,}")
+
+# Verify vehicle-fuel combination uniqueness
+# Note: Different vehicles can have identical specs (year/make/model/MPG)
+# This is expected - e.g., 2010 Malibu has multiple trim levels with same MPG
+unique_combinations = len(epa_df)
+unique_ids = epa_df['id'].nunique()
+print(f"Total vehicle-fuel combinations: {unique_combinations:,}")
+print(f"Unique vehicle IDs: {unique_ids:,}")
+
+print(f"PASS: No duplicate ID+fuel_rank combinations" if duplicate_count == 0 else f"FAIL: Found {duplicate_count} true duplicate records")
 
 if duplicate_count > 0:
-    print("\nSample duplicates:")
-    print(epa_df[duplicates][['year', 'make', 'model', 'comb08']].head(10))
+    print("\nSample true duplicates (same ID + fuel_rank):")
+    print(epa_df[id_rank_duplicates][['year', 'make', 'model', 'fuel_used', 'fuel_rank', 'id']].head(10))
 
 # Test 6: Data Distribution Analysis
 print(f"\nTEST 6: Data Distribution Analysis")
@@ -91,7 +107,7 @@ print(f"\nTop 5 Makes by Record Count:")
 print(epa_df['make'].value_counts().head())
 
 print(f"\nFuel Type Distribution:")
-print(epa_df['fuelType'].value_counts())
+print(epa_df['fuel_used'].value_counts())
 
 print(f"\nYear Distribution:")
 print(epa_df['year'].value_counts().sort_index())

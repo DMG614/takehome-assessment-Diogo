@@ -206,7 +206,39 @@ This way we can get richer analysis.
 
 ---
 
-### 6. Text Field Cleaning
+### 6. Dual-Fuel Vehicle Handling
+
+**Decision: Explode into Multiple Rows**
+
+**Problem:**
+EPA raw data includes both `fuelType1` (primary) and `fuelType2` (secondary) columns. Approximately 1,514 vehicles support multiple fuel types:
+- **Plug-in hybrids**: Primary=Gasoline, Secondary=Electricity (e.g., Chevy Volt, Prius Plug-in, Ford C-MAX Energi)
+- **Flex-fuel vehicles**: Primary=Gasoline, Secondary=E85
+
+When aggregating by fuel type for infrastructure analysis, we need to count plug-in hybrids in BOTH the Gasoline and Electricity categories, since they use both types of infrastructure.
+
+**Solution:**
+"Explode" dual-fuel vehicles into multiple rows - one row per fuel type. The processing script:
+1. Renames `fuelType1` → `primary_fuel`, `fuelType2` → `secondary_fuel` (semantic naming)
+2. Creates `fuel_used` column (which specific fuel this row represents)
+3. Creates `fuel_rank` column (1=primary, 2=secondary, future-proof for tri-fuel)
+
+Example - 2011 Chevy Volt creates TWO rows:
+- Row 1: `fuel_used='Premium Gasoline'`, `fuel_rank=1`
+- Row 2: `fuel_used='Electricity'`, `fuel_rank=2`
+
+**Impact:**
+- Processed EPA data goes from ~19,810 rows → ~21,357 rows (+1,547 extra rows)
+- Rows now represent "vehicle-fuel combinations" rather than unique vehicles
+- Infrastructure analysis correctly counts plug-in hybrids in both fuel type categories
+- This accurately reflects infrastructure demand
+
+**Trade-off:**
+Vehicle counts become ambiguous (need to specify "unique vehicles" vs "vehicle-fuel combinations"), but infrastructure planning becomes more accurate.
+
+---
+
+### 7. Text Field Cleaning
 
 **Decision: Standardize for Joining**
 

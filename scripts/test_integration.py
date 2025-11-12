@@ -40,13 +40,13 @@ def test_vehicle_complaints_analysis():
     # Show top 10 vehicles with most complaints
     print("\nTop 10 Vehicles with Most Complaints:")
     top_complaints = df[df['total_complaints'] > 0].nlargest(10, 'total_complaints')
-    print(top_complaints[['year', 'make', 'model', 'fuelType', 'comb08', 'total_complaints',
+    print(top_complaints[['year', 'make', 'model', 'fuel_used', 'fuel_rank', 'comb08', 'total_complaints',
                           'crash_incidents', 'fire_incidents']].to_string(index=False))
 
     # Show vehicles with best MPG and zero complaints
     print("\nTop 10 Most Fuel-Efficient Vehicles with Zero Complaints:")
     reliable_efficient = df[df['total_complaints'] == 0].nlargest(10, 'comb08')
-    print(reliable_efficient[['year', 'make', 'model', 'fuelType', 'comb08', 'city08',
+    print(reliable_efficient[['year', 'make', 'model', 'fuel_used', 'fuel_rank', 'comb08', 'city08',
                                'highway08']].to_string(index=False))
 
     print("\nVehicle Complaints Analysis tests complete")
@@ -121,7 +121,7 @@ def test_comprehensive_analysis():
     ].nlargest(10, 'comb08')
 
     if len(best_overall) > 0:
-        print(best_overall[['year', 'make', 'model', 'fuelType', 'comb08', 'total_complaints',
+        print(best_overall[['year', 'make', 'model', 'fuel_used', 'fuel_rank', 'comb08', 'total_complaints',
                             'stations_nationwide']].to_string(index=False))
     else:
         print("No vehicles meet all criteria (MPG>35, complaints<10, stations>1000)")
@@ -131,7 +131,7 @@ def test_comprehensive_analysis():
             (df['total_complaints'] < 50) &
             (df['stations_nationwide'] > 500)
         ].nlargest(10, 'comb08')
-        print(best_overall[['year', 'make', 'model', 'fuelType', 'comb08', 'total_complaints',
+        print(best_overall[['year', 'make', 'model', 'fuel_used', 'fuel_rank', 'comb08', 'total_complaints',
                             'stations_nationwide']].to_string(index=False))
 
     # Show infrastructure gaps for complained vehicles
@@ -142,7 +142,7 @@ def test_comprehensive_analysis():
     ].drop_duplicates(subset=['year', 'make', 'model']).nlargest(10, 'total_complaints')
 
     if len(problem_vehicles) > 0:
-        print(problem_vehicles[['year', 'make', 'model', 'fuelType', 'total_complaints',
+        print(problem_vehicles[['year', 'make', 'model', 'fuel_used', 'fuel_rank', 'total_complaints',
                                 'crash_incidents', 'stations_nationwide']].to_string(index=False))
     else:
         print("No vehicles have complaints>100 with stations<5000")

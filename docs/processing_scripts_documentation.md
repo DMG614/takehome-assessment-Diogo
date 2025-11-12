@@ -52,19 +52,46 @@ They're all considered, because a 2020 Honda Accord LX (2.0L, CVT, FWD, 30 MPG) 
 
 ### Step 6: Select relevant columns
 
-The raw file has 84 columns. Most are niche fields like "fuel cost per year in 2008 dollars" or "EPA vehicle size class code.". It was narrowed down to 15 essential columns:
+The raw file has 84 columns. Most are niche fields like "fuel cost per year in 2008 dollars" or "EPA vehicle size class code.". It was narrowed down to 16 essential columns:
 
 - Vehicle identifiers: year, make, model, class
 - Performance specs: engine displacement, cylinders, transmission, drive type
-- Fuel data: fuel type (primary and secondary), city/highway/combined MPG
+- Fuel data: primary_fuel, secondary_fuel (renamed from fuelType1/fuelType2 for semantic clarity), city/highway/combined MPG
 - Emissions: CO2 grams per mile
 - Reference: original EPA ID
 
 Everything else gets dropped to keep the output file clean and focused.
 
-### Step 7: Save and summarize
+### Step 7: Handle dual-fuel vehicles (explosion)
 
-The cleaned data was saved to CSV and then a summary showing how many records were at the start, how many were kept, and how the column count changed is printed. This gives us a quick sanity check that the process worked as expected.
+**New step added to correctly handle plug-in hybrids and flex-fuel vehicles.**
+
+Vehicles with `secondary_fuel` (like plug-in hybrids) need to be counted in infrastructure analysis for BOTH fuel types they support.
+
+**Solution**: "Explode" dual-fuel vehicles into multiple rows. The script:
+1. Renames EPA's `fuelType1` → `primary_fuel` and `fuelType2` → `secondary_fuel` (semantic naming)
+2. For each vehicle with a non-null `secondary_fuel`, creates TWO rows:
+  - Row 1: `fuel_used` = `primary_fuel`, `fuel_rank` = 1
+  - Row 2: `fuel_used` = `secondary_fuel`, `fuel_rank` = 2
+3. Single-fuel vehicles get one row with `fuel_used` = `primary_fuel`, `fuel_rank` = 1
+
+**Example**:
+- **Before**: 1 row for 2011 Chevy Volt (primary_fuel='Premium Gasoline', secondary_fuel='Electricity')
+- **After**: 2 rows for 2011 Chevy Volt
+  - Row 1: fuel_used='Premium Gasoline', fuel_rank=1
+  - Row 2: fuel_used='Electricity', fuel_rank=2
+
+**Impact**: ~1,500 dual-fuel vehicles create ~3,094 extra rows. Output goes from ~20,000 → ~22,000 vehicle-fuel combinations.
+
+This is important because, when analyzing fuel infrastructure needs, plug-in hybrids do use EV charging stations AND gas stations. Counting them in both categories accurately reflects infrastructure demand.
+
+### Step 8: Save and summarize
+
+The cleaned data was saved to CSV. The summary now shows:
+- Initial raw records
+- Records after cleaning (before explosion)
+- Final records after dual-fuel explosion
+- Note that rows now represent vehicle-fuel combinations, not unique vehicles
 
 ---
 

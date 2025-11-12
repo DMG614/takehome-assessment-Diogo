@@ -81,7 +81,8 @@ The integration process uses three cleaned datasets:
 
 **Join Logic:**
 - Maps EPA fuel types to DOE fuel type codes (e.g., "Electricity" → "ELEC"), to normalize it
-- Aggregates vehicle counts by fuel type and year
+- Aggregates vehicle-fuel combinations by fuel type and year
+- **Important**: Dual-fuel vehicles (like plug-in hybrids) are counted in EACH fuel type category they support. A plug-in hybrid appears in both "Gasoline" and "Electricity" counts, accurately reflecting infrastructure demand.
 - Joins with fuel station counts nationwide
 - Calculates vehicles-per-station ratios
 
@@ -90,7 +91,7 @@ The integration process uses three cleaned datasets:
 |--------|------|-------------|
 | year | int | Vehicle model year |
 | fuel_type_code | string | DOE fuel type code (ELEC, CNG, E85, etc.) |
-| vehicle_count | int | Number of vehicles produced |
+| vehicle_count | int | Number of vehicle-fuel combinations (includes dual-fuel vehicles in multiple categories) |
 | avg_combined_mpg | float | Average combined MPG for this fuel type |
 | avg_city_mpg | float | Average city MPG |
 | avg_highway_mpg | float | Average highway MPG |
@@ -98,10 +99,15 @@ The integration process uses three cleaned datasets:
 | available_stations | int | Currently available stations |
 | vehicles_per_station | float | Ratio of vehicles to stations |
 
+**Example**: A 2020 Chevy Volt (plug-in hybrid) contributes to both:
+- Gasoline vehicle_count (can use gas stations)
+- Electricity vehicle_count (can use EV charging stations)
+
 **Business Questions Answered:**
 1. **Are there enough alternative fuel stations for alternative fuel vehicles?**
    - Compare `vehicle_count` against `available_stations`
    - Identify infrastructure gaps that may limit vehicle adoption
+   - Dual-fuel counting provides accurate demand estimates
 
 2. **Which fuel types have the worst infrastructure coverage?**
    - Analyze `vehicles_per_station` ratio

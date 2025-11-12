@@ -36,7 +36,12 @@ def check_file(path, required_cols, min_rows=100):
 
 
 def validate_vehicles(df):
-    """Check vehicle data quality."""
+    """
+    Check vehicle data quality.
+
+    Note: After dual-fuel vehicle explosion, rows represent vehicle-fuel
+    combinations, not unique vehicles. Dual-fuel vehicles appear twice.
+    """
     issues = []
 
     # Year range (EPA data filtered to 2010+)
@@ -57,18 +62,20 @@ def validate_vehicles(df):
 
 
 # Files to validate
+# Note: Row count expectations updated for dual-fuel vehicle explosion
+# (~1,547 dual-fuel vehicles × 2 = ~3,094 additional rows)
 files = [
     ('data/integrated/vehicle_complaints_analysis.csv',
      ['year', 'make', 'model', 'comb08', 'total_complaints'],
-     1000),
+     20000),  # Expect ~21,357 vehicle-fuel combinations
 
     ('data/integrated/fuel_infrastructure_analysis.csv',
      ['year', 'fuel_type_code', 'vehicle_count', 'total_stations'],
-     30),  # Small dataset: fuel types by year
+     30),  # Small dataset: fuel types by year (~43 rows)
 
     ('data/integrated/comprehensive_vehicle_analysis.csv',
      ['year', 'make', 'model', 'comb08', 'total_complaints', 'stations_nationwide'],
-     1000)
+     20000)  # Expect ~21,357 vehicle-fuel combinations
 ]
 
 check_problems = True

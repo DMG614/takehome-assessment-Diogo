@@ -141,19 +141,19 @@ See [automation_strategy.md](docs/automation_strategy.md) for details.
 ## Output Datasets
 
 ### vehicle_complaints_analysis.csv
-Combines EPA fuel economy data with NHTSA safety complaints at the vehicle level. Each row represents a specific vehicle model/year with its fuel efficiency metrics and aggregated safety complaint statistics. Enables analysis of relationships between vehicle characteristics and safety issues. ~19,810 rows.
+Combines EPA fuel economy data with NHTSA safety complaints. Each row represents a vehicle-fuel combination (dual-fuel vehicles like plug-in hybrids appear twice - once for each fuel type). Enables analysis of relationships between vehicle characteristics and safety issues. ~21,307 rows.
 
-Key columns: `year`, `make`, `model`, `comb08` (MPG), `total_complaints`, `crash_incidents`, `fire_incidents`
+Key columns: `year`, `make`, `model`, `fuel_used`, `fuel_rank`, `comb08` (MPG), `total_complaints`, `crash_incidents`, `fire_incidents`
 
 ### fuel_infrastructure_analysis.csv
-Aggregates vehicles by fuel type and year, joining with DOE alternative fuel station counts. Answers infrastructure availability questions like whether there are enough EV charging stations for electric vehicles. The aggregation by fuel type makes this dataset small (43 rows) and focused on infrastructure planning insights.
+Aggregates vehicle-fuel combinations by fuel type and year, joining with DOE alternative fuel station counts. Answers infrastructure availability questions like whether there are enough EV charging stations for electric vehicles. Dual-fuel vehicles (like plug-in hybrids) are counted in each fuel type category they support, providing accurate infrastructure demand estimates. ~43 rows.
 
-Key columns: `year`, `fuel_type_code`, `vehicle_count`, `total_stations`
+Key columns: `year`, `fuel_type_code`, `vehicle_count`, `total_stations`, `vehicles_per_station`
 
 ### comprehensive_vehicle_analysis.csv
-Combines all three data sources at the vehicle level, providing the most complete view with fuel economy, safety complaints, and infrastructure availability for each vehicle model. Best for exploratory analysis, though DOE station counts are current snapshots replicated across years. ~19,810 rows.
+Combines all three data sources, providing the most complete view with fuel economy, safety complaints, and infrastructure availability. Each row represents a vehicle-fuel combination. Best for exploratory analysis, though DOE station counts are current snapshots replicated across years. ~21,307 rows.
 
-Key columns: All columns from vehicle_complaints_analysis plus `stations_nationwide`, `stations_by_fuel_type`
+Key columns: All columns from vehicle_complaints_analysis plus `stations_nationwide`, `fuel_type_code`
 
 ## Documentation
 
@@ -206,15 +206,17 @@ python scripts/validate_data.py
 
 Expected output:
 ```
-data/integrated/vehicle_complaints_analysis.csv: 19,810 rows
+data/integrated/vehicle_complaints_analysis.csv: 21,307 rows
 data/integrated/fuel_infrastructure_analysis.csv: 43 rows
-data/integrated/comprehensive_vehicle_analysis.csv: 19,810 rows
+data/integrated/comprehensive_vehicle_analysis.csv: 21,307 rows
 
 Data quality checks:
 All checks passed
 
 Validation complete
 ```
+
+**Note**: Row counts reflect vehicle-fuel combinations. Dual-fuel vehicles (like plug-in hybrids) appear twice.
 
 ## Known Issues
 

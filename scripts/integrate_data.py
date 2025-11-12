@@ -84,7 +84,8 @@ def create_vehicle_complaints_analysis(epa_df, nhtsa_df):
     # Select relevant columns for analysis
     analysis_df = joined_df[[
         'year', 'make', 'model', 'VClass', 'drive', 'cylinders', 'displ',
-        'fuelType', 'city08', 'highway08', 'comb08', 'co2TailpipeGpm',
+        'primary_fuel', 'secondary_fuel', 'fuel_used', 'fuel_rank',
+        'city08', 'highway08', 'comb08', 'co2TailpipeGpm',
         'total_complaints', 'crash_incidents', 'fire_incidents',
         'total_injured', 'total_deaths', 'avg_complaint_mileage'
     ]]
@@ -115,6 +116,10 @@ def create_fuel_infrastructure_analysis(epa_df, doe_df):
     - Are there enough fuel stations for alternative fuel vehicles?
     - Which states have the best infrastructure for EVs, hybrids, etc?
     - Is there a mismatch between vehicle production and station availability?
+
+    Note: Counts vehicle-fuel combinations, not unique vehicles. Dual-fuel vehicles
+    (like plug-in hybrids) are counted in both fuel type categories, which correctly
+    reflects infrastructure needs.
     """
     print("\nCreating Fuel Infrastructure Analysis")
 
@@ -133,10 +138,14 @@ def create_fuel_infrastructure_analysis(epa_df, doe_df):
         'LNG': 'LNG'
     }
 
-    # Create mapped fuel type for EPA data
-    epa_df['fuel_type_code'] = epa_df['fuelType1'].map(fuel_type_mapping)
+    # Use the exploded fuel_used column (already set in process_epa.py)
+    # This column contains EITHER primary_fuel OR secondary_fuel for dual-fuel vehicles
+    epa_df['fuel_type_code'] = epa_df['fuel_used'].map(fuel_type_mapping)
 
-    # Count vehicles by fuel type and year
+    # Count vehicle-fuel combinations by fuel type and year
+    # Note: This counts each vehicle-fuel combination, so dual-fuel vehicles
+    # appear in multiple fuel type categories (e.g., plug-in hybrids counted
+    # in both Gasoline and Electricity)
     vehicle_counts = epa_df.groupby(['year', 'fuel_type_code']).agg({
         'id': 'count',
         'comb08': 'mean',
@@ -146,6 +155,9 @@ def create_fuel_infrastructure_analysis(epa_df, doe_df):
 
     vehicle_counts.columns = ['year', 'fuel_type_code', 'vehicle_count',
                                'avg_combined_mpg', 'avg_city_mpg', 'avg_highway_mpg']
+
+    print(f"Aggregated into {len(vehicle_counts):,} year-fuel type combinations")
+    print(f"Note: Vehicle counts include dual-fuel vehicles in each applicable category")
 
     # Count fuel stations by type and state
     station_counts = doe_df.groupby(['fuel_type_code', 'state']).agg({
@@ -213,7 +225,8 @@ def create_comprehensive_analysis(epa_df, nhtsa_df, doe_df):
         'LNG': 'LNG'
     }
 
-    base_df['fuel_type_code'] = base_df['fuelType'].map(fuel_type_mapping)
+    # Use the exploded fuel_used column
+    base_df['fuel_type_code'] = base_df['fuel_used'].map(fuel_type_mapping)
 
     # Get station counts by fuel type
     station_counts = doe_df.groupby('fuel_type_code').agg({

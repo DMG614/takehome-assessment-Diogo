@@ -2,6 +2,8 @@
 
 ## EPA Vehicles (Cleaned)
 
+**Important**: After processing, rows represent **vehicle-fuel combinations**, not unique vehicles. Dual-fuel vehicles (like plug-in hybrids) are exploded into multiple rows, one for each fuel type they support.
+
 | Column | Description |
 |--------|-------------|
 | `year` | Model year |
@@ -12,13 +14,19 @@
 | `trany` | Transmission type |
 | `cylinders` | Number of engine cylinders |
 | `displ` | Engine displacement in liters (engine size) |
-| `fuelType` | Primary fuel type (Gasoline, Diesel, Electric, etc.) |
-| `fuelType1` | Secondary fuel type (for dual-fuel vehicles) |
+| `primary_fuel` | Primary fuel type (semantic naming, replaces fuelType1) |
+| `secondary_fuel` | Secondary fuel type for dual-fuel vehicles (may be null, replaces fuelType2) |
+| `fuel_used` | **Exploded fuel type** - The specific fuel this row represents (either primary_fuel OR secondary_fuel) |
+| `fuel_rank` | Fuel priority rank: 1=primary, 2=secondary (future-proof for tri-fuel vehicles) |
 | `city08` | City MPG - fuel efficiency in stop-and-go traffic (08 = 2008 EPA test standard) |
 | `highway08` | Highway MPG - fuel efficiency at steady highway speed |
-| `comb08` | Combined MPG - weighted average|
+| `comb08` | Combined MPG - weighted average |
 | `co2TailpipeGpm` | CO2 emissions in grams per mile |
-| `id` | Unique vehicle ID |
+| `id` | Unique vehicle ID (same ID appears in multiple rows for dual-fuel vehicles) |
+
+**Example**: A 2020 Chevy Volt (plug-in hybrid) creates TWO rows:
+- Row 1: fuel_used='Gasoline', fuel_rank=1, primary_fuel='Gasoline', secondary_fuel='Electricity'
+- Row 2: fuel_used='Electricity', fuel_rank=2, primary_fuel='Gasoline', secondary_fuel='Electricity'
 
 **Note on "08" suffix:** These columns use the 2008 EPA testing methodology, which is more realistic than pre-2008 standards. For electric vehicles, MPG is actually MPGe (miles per gallon equivalent).
 
