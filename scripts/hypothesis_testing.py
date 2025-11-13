@@ -15,6 +15,7 @@ print("Hypothesis Testing - Automotive Data Analysis\n")
 
 # H1: Are efficient vehicles more reliable?
 print("1. Do efficient vehicles have fewer complaints?")
+print("   Dataset: vehicle_complaints_analysis.csv (EPA + NHTSA)")
 
 high_mpg = complaints_df[complaints_df['comb08'] > 30]
 low_mpg = complaints_df[complaints_df['comb08'] <= 30]
@@ -30,6 +31,7 @@ else:
 
 # H2: Which brands have the highest complaint rates?
 print("2. Which brands have the most safety issues?")
+print("   Dataset: vehicle_complaints_analysis.csv (EPA + NHTSA)")
 
 brand_complaints = complaints_df.groupby('make').agg({
     'total_complaints': 'sum',
@@ -52,6 +54,7 @@ for make, row in top_problematic.iterrows():
     
 # H3: Are EVs reporting fewer issues?
 print("3. Do electric vehicles have fewer complaints than gas vehicles?")
+print("   Dataset: vehicle_complaints_analysis.csv (EPA + NHTSA)")
 
 evs = complaints_df[complaints_df['fuel_used'].str.contains('Electricity', case=False, na=False)]
 gas = complaints_df[complaints_df['fuel_used'].str.contains('Gasoline', case=False, na=False)]
@@ -70,6 +73,7 @@ else:
 
 # H4: Which fuel types are infrastructure-constrained?
 print("4. Which fuel types lack adequate infrastructure?")
+print("   Dataset: fuel_infrastructure_analysis.csv (EPA + DOE)")
 print("   (Using 10 stations per 1,000 vehicles as minimum threshold)")
 
 infra_2024 = infrastructure_df[infrastructure_df['year'] == 2024].copy()
@@ -91,6 +95,7 @@ else:
 
 # H5: Do infrastructure gaps correlate with more complaints?
 print("5. Do vehicles with poor infrastructure have more complaints?")
+print("   Dataset: comprehensive_vehicle_analysis.csv (EPA + NHTSA + DOE)")
 
 high_infra = comprehensive_df[comprehensive_df['stations_nationwide'] > 10000]
 low_infra = comprehensive_df[comprehensive_df['stations_nationwide'] <= 10000]
@@ -109,6 +114,7 @@ else:
 
 # BONUS: Best overall segment
 print("6. Which vehicle classes perform best overall?")
+print("   Dataset: comprehensive_vehicle_analysis.csv (EPA + NHTSA + DOE)")
 
 segment_analysis = comprehensive_df.groupby('VClass').agg({
     'comb08': 'mean',
