@@ -159,26 +159,47 @@ def create_fuel_infrastructure_analysis(epa_df, doe_df):
     print(f"Aggregated into {len(vehicle_counts):,} year-fuel type combinations")
     print(f"Note: Vehicle counts include dual-fuel vehicles in each applicable category")
 
-    # Count fuel stations by type and state
-    station_counts = doe_df.groupby(['fuel_type_code', 'state']).agg({
-        'id': 'count',
-        'status_code': lambda x: (x == 'E').sum()  # Available stations
-    }).reset_index()
+    # Prepare DOE data with historical information using open_date
+    print("Calculating historical station counts using open_date field...")
+    doe_df['open_date'] = pd.to_datetime(doe_df['open_date'], errors='coerce')
+    doe_df['open_year'] = doe_df['open_date'].dt.year
 
-    station_counts.columns = ['fuel_type_code', 'state', 'total_stations', 'available_stations']
+    # For each year in the vehicle data, count stations that were open by that year
+    all_infrastructure = []
 
-    # Calculate total stations by fuel type (across all states)
-    total_stations_by_fuel = station_counts.groupby('fuel_type_code').agg({
-        'total_stations': 'sum',
-        'available_stations': 'sum'
-    }).reset_index()
+    for year in sorted(vehicle_counts['year'].unique()):
+        # Get vehicle counts for this year
+        vehicles_this_year = vehicle_counts[vehicle_counts['year'] == year].copy()
 
-    # Join vehicles with station availability
-    infrastructure_df = vehicle_counts.merge(
-        total_stations_by_fuel,
-        on='fuel_type_code',
-        how='left'
-    )
+        # Count stations that were open by this year (open_year <= year)
+        # This gives us accurate historical station counts
+        stations_by_year = doe_df[doe_df['open_year'] <= year].copy()
+
+        # Group by fuel type and state
+        station_counts = stations_by_year.groupby(['fuel_type_code', 'state']).agg({
+            'id': 'count',
+            'status_code': lambda x: (x == 'E').sum()  # Available stations
+        }).reset_index()
+
+        station_counts.columns = ['fuel_type_code', 'state', 'total_stations', 'available_stations']
+
+        # Calculate total stations by fuel type (across all states)
+        total_stations_by_fuel = station_counts.groupby('fuel_type_code').agg({
+            'total_stations': 'sum',
+            'available_stations': 'sum'
+        }).reset_index()
+
+        # Join vehicles with station availability for this year
+        year_data = vehicles_this_year.merge(
+            total_stations_by_fuel,
+            on='fuel_type_code',
+            how='left'
+        )
+
+        all_infrastructure.append(year_data)
+
+    # Combine all years
+    infrastructure_df = pd.concat(all_infrastructure, ignore_index=True)
 
     # Fill NaN for fuel types with no stations
     infrastructure_df[['total_stations', 'available_stations']] = \
@@ -228,20 +249,39 @@ def create_comprehensive_analysis(epa_df, nhtsa_df, doe_df):
     # Use the exploded fuel_used column
     base_df['fuel_type_code'] = base_df['fuel_used'].map(fuel_type_mapping)
 
-    # Get station counts by fuel type
-    station_counts = doe_df.groupby('fuel_type_code').agg({
-        'id': 'count'
-    }).reset_index()
-    station_counts.columns = ['fuel_type_code', 'stations_nationwide']
+    # Prepare DOE data with historical information using open_date
+    print("Calculating historical station counts for comprehensive analysis:")
+    doe_df['open_date'] = pd.to_datetime(doe_df['open_date'], errors='coerce')
+    doe_df['open_year'] = doe_df['open_date'].dt.year
 
-    # Join with infrastructure data
-    comprehensive_df = base_df.merge(
-        station_counts,
-        on='fuel_type_code',
-        how='left'
-    )
+    # For each year, count stations that were open by that year
+    all_comprehensive = []
 
-    comprehensive_df['stations_nationwide'] = comprehensive_df['stations_nationwide'].fillna(0)
+    for year in sorted(base_df['year'].unique()):
+        # Get vehicles for this year
+        vehicles_this_year = base_df[base_df['year'] == year].copy()
+
+        # Count stations that were open by this year
+        stations_by_year = doe_df[doe_df['open_year'] <= year].copy()
+
+        station_counts = stations_by_year.groupby('fuel_type_code').agg({
+            'id': 'count'
+        }).reset_index()
+        station_counts.columns = ['fuel_type_code', 'stations_nationwide']
+
+        # Join with infrastructure data for this year
+        year_data = vehicles_this_year.merge(
+            station_counts,
+            on='fuel_type_code',
+            how='left'
+        )
+
+        year_data['stations_nationwide'] = year_data['stations_nationwide'].fillna(0)
+
+        all_comprehensive.append(year_data)
+
+    # Combine all years
+    comprehensive_df = pd.concat(all_comprehensive, ignore_index=True)
 
     print(f"Created comprehensive analysis with {len(comprehensive_df):,} records")
 

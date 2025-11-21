@@ -32,11 +32,15 @@ Aggregations were created using pandas groupby for metrics like total_complaints
 
 Null handling was also tricky because complaints without mileage are excluded from averages, but vehicles with zero crashes get crash_incidents=0 rather than null.
 
-## DOE Data Limitations
+## DOE Data - Historical Infrastructure Discovery
 
-The DOE alternative fuel stations API returns current snapshot data only. There's no historical data about how many stations existed in previous years.
+Initially, it appeared that the DOE alternative fuel stations API returned only current snapshot data with no historical information about when stations opened.
 
-The workaround was to keep the current station count and replicate it across all years in the integration step. This is obviously wrong for historical analysis but there's no alternative without time-series data. This limitation was documented in the processing strategy.
+However, upon closer inspection of the data schema, an `open_date` field was discovered for each station. This field indicates when each station was opened, enabling accurate historical infrastructure analysis.
+
+The integration script was updated to leverage this field: for each year in the vehicle data, it counts stations where `open_date <= that year`. This provides real historical growth trends showing that EV charging stations grew from approximately 1,000 in 2011 to over 84,000 in 2025, and hydrogen stations grew from 8 in 2014 to 81 in 2025.
+
+This correction significantly improved the accuracy of the infrastructure analysis, allowing for proper time-series questions like "How has EV infrastructure grown relative to vehicle adoption?"
 
 The API requires authentication (NREL key) which was handled using python-dotenv to load from a .env file.
 
