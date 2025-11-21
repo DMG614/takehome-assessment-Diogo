@@ -22,7 +22,7 @@ The Environmental Protection Agency maintains comprehensive vehicle fuel economy
 The National Highway Traffic Safety Administration tracks consumer complaints about vehicle safety issues, crashes, fires, and injuries. Each complaint includes details like vehicle make/model/year, incident description, mileage, and component failures. The raw data contains individual complaint records (one row per complaint), which are aggregated by vehicle to create summary statistics like total complaints, crash incidents, and fire incidents. Downloaded as bulk ZIP files covering 2020-2024, this data provides the safety signal for identifying problematic vehicles.
 
 ### DOE Alternative Fuel Stations
-The Department of Energy's Alternative Fuels Data Center maintains a registry of alternative fuel stations across the United States, including EV charging stations, CNG, hydrogen, biodiesel, and E85 locations. Accessed via the NREL API, this dataset provides current station counts by fuel type and location. The limitation is that it only provides a current snapshot. There's no historical data about how many stations existed in previous years, so the same counts are replicated across all years in the integrated analysis.
+The Department of Energy's Alternative Fuels Data Center maintains a registry of alternative fuel stations across the United States, including EV charging stations, CNG, hydrogen, biodiesel, and E85 locations. Accessed via the NREL API, this dataset includes an `open_date` field for each station, enabling accurate historical infrastructure analysis. The integration script calculates year-specific station counts by filtering to stations that were open by each year, providing real growth trends (e.g., EV charging stations grew from ~1,000 in 2011 to ~84,000 in 2025).
 
 ## Quick Start
 
@@ -151,7 +151,7 @@ Aggregates vehicle-fuel combinations by fuel type and year, joining with DOE alt
 Key columns: `year`, `fuel_type_code`, `vehicle_count`, `total_stations`, `vehicles_per_station`
 
 ### comprehensive_vehicle_analysis.csv
-Combines all three data sources, providing the most complete view with fuel economy, safety complaints, and infrastructure availability. Each row represents a vehicle-fuel combination. Best for exploratory analysis, though DOE station counts are current snapshots replicated across years. ~21,307 rows.
+Combines all three data sources, providing the most complete view with fuel economy, safety complaints, and infrastructure availability. Each row represents a vehicle-fuel combination. Best for exploratory analysis with accurate historical infrastructure data calculated from station opening dates. ~21,307 rows.
 
 Key columns: All columns from vehicle_complaints_analysis plus `stations_nationwide`, `fuel_type_code`
 
